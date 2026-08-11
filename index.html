@@ -326,10 +326,11 @@ function imageNames(foodName){
 
     parts.forEach(part => {
 
-        let name = part.toLowerCase().trim();
+        let name = part.trim();
 
         let variations = [
             name,
+            name.toLowerCase(),
             name.replace(/\s+/g, "-"),
             name.replace(/\s+/g, "_"),
             name.replace(/\s+/g, ""),
