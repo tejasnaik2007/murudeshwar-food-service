@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Murudeshwar Food Service</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f5f5}
+header{background:#e84b00;color:white;text-align:center;padding:22px}
+.container{width:94%;max-width:1100px;margin:auto}
+.search input{width:100%;padding:14px;margin:18px 0;border:1px solid #ccc;border-radius:8px;font-size:16px}
+.category{background:#333;color:white;padding:12px;margin-top:20px;border-radius:8px;font-size:20px}
+.food{background:white;margin:7px 0;padding:10px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 6px #0001}
+.food-left{display:flex;align-items:center;gap:12px}
+.food-image{width:75px;height:65px;object-fit:cover;border-radius:8px;background:#eee}
+.food-name{font-weight:bold;font-size:16px}
+.price{color:#d43b00;font-weight:bold;margin-top:5px}
+.season{color:#087a3d;font-weight:bold;margin-top:5px}
+.controls{display:flex;align-items:center;gap:6px}
+.qty-btn{width:34px;height:34px;border:0;border-radius:7px;background:#eee;font-size:21px;font-weight:bold;cursor:pointer}
+.plus{background:#159447;color:white}
+.qty{min-width:25px;text-align:center;font-weight:bold}
+.cart{background:white;margin:25px 0;padding:20px;border-radius:10px;box-shadow:0 2px 8px #0002}
+.cart-item{padding:12px 0;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;gap:10px}
+.cart-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.remove{background:#c62828;color:white;border:0;padding:7px 10px;border-radius:6px}
+.total{text-align:right;font-size:22px;font-weight:bold;margin:20px 0}
+input{width:100%;padding:13px;margin:6px 0;border:1px solid #ccc;border-radius:7px;font-size:16px}
+.whatsapp{width:100%;padding:14px;border:0;border-radius:8px;background:#25D366;color:white;font-size:18px;font-weight:bold}
+.clear{width:100%;padding:11px;margin-top:8px;border:0;border-radius:8px;background:#555;color:white}
+.empty{text-align:center;color:#777;padding:20px}
+.hidden{display:none}
+@media(max-width:600px){
+.food-image{width:60px;height:55px}
+.food-name{font-size:14px}
+.qty-btn{width:30px;height:30px}
+.cart-item{flex-direction:column}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🍴 Murudeshwar Food Service</h1>
+<p>Fresh & Delicious Food</p>
+</header>
+
+<div class="container">
+
+<div class="search">
+<input id="search" type="text" placeholder="🔍 Search food..." oninput="searchFood()">
+</div>
+
+<div id="menu"></div>
+
+<div class="cart">
+<h2>🛒 Your Cart</h2>
+
+<div id="cartItems">
+<div class="empty">Cart is empty</div>
+</div>
+
+<div class="total">
+Total: ₹<span id="total">0</span>
+</div>
+
+<h3>📋 Order Details</h3>
+
+<input id="room" type="text" placeholder="🏨 Enter Room Number">
+<input id="phone" type="tel" placeholder="📞 Enter Phone Number">
+
+<button class="whatsapp" onclick="sendWhatsApp()">
+💬 Place Order on WhatsApp
+</button>
+
+<button class="clear" onclick="clearCart()">
+Clear Cart
+</button>
+</div>
+
+</div>
+
+<script>
+
+/* =====================================================
+   MENU
+   PRICES INCLUDE YOUR REQUESTED INCREASES
+===================================================== */
+
+const foods = [
+
+/* SNACKS +40 */
+
+["SNACKS","Idli (2 Piece)",90],
+["SNACKS","Gulab Jamun (2 Piece)",80],
+["SNACKS","Idli (2 Piece) Vada (1 Piece)",110],
+["SNACKS","Vada (2 Piece)",100],
+["SNACKS","Chow Chow Bath",120],
+["SNACKS","Masala Dosa",120],
+["SNACKS","Plain Dosa",100],
+["SNACKS","Set Dosa (3 Piece)",120],
+["SNACKS","Onion Uttappa (3 Piece)",110],
+["SNACKS","Puri Kurma",110],
+["SNACKS","Chapathi Kurma",100],
+["SNACKS","Parota Kurma",110],
+["SNACKS","Onion Bajji",110],
+["SNACKS","Masala Rice",100],
+["SNACKS","Upma",80],
+["SNACKS","Sira",90],
+["SNACKS","Ghee Roast Plain Dosa",110],
+["SNACKS","Ghee Roast Masala Dosa",130],
+["SNACKS","Buns",90],
+
+/* BEVERAGES +10 */
+
+["BEVERAGES","Tea",35],
+["BEVERAGES","Milk",30],
+["BEVERAGES","Soft Drinks",0],
+["BEVERAGES","Fresh Juice",0],
+["BEVERAGES","Mineral Water",0],
+
+/* SOUP & STARTERS +50 */
+
+["SOUPS & STARTERS","Tomato Soup",130],
+["SOUPS & STARTERS","Veg Manchow Soup",150],
+["SOUPS & STARTERS","Gobi Manchurian",170],
+["SOUPS & STARTERS","Paneer Manchurian",210],
+["SOUPS & STARTERS","Mushroom Manchurian",200],
+["SOUPS & STARTERS","Baby Corn Manchurian",200],
+["SOUPS & STARTERS","Finger Chips",130],
+["SOUPS & STARTERS","Masala Papad",110],
+
+/* MEAL & RICE +50 */
+
+["MEALS / RICE ITEMS","South Indian Special Meal",170],
+["MEALS / RICE ITEMS","North Indian Special Meals",250],
+["MEALS / RICE ITEMS","Dal Kichidi",170],
+["MEALS / RICE ITEMS","Curd Rice",150],
+["MEALS / RICE ITEMS","Veg Biryani",190],
+["MEALS / RICE ITEMS","Jeera Rice",150],
+["MEALS / RICE ITEMS","Veg Pullav",170],
+["MEALS / RICE ITEMS","Veg Fried Rice",170],
+["MEALS / RICE ITEMS","Veg Noodles",170],
+["MEALS / RICE ITEMS","Ghee Rice",170],
+["MEALS / RICE ITEMS","Plain Rice",85],
+["MEALS / RICE ITEMS","Roti Curry",150],
+
+/* CURRIES & GRAVIES +50 */
+
+["CURRIES & GRAVIES","Dal Fry",150],
+["CURRIES & GRAVIES","Dal Thadka",170],
+["CURRIES & GRAVIES","Dal Kholapuri",170],
+["CURRIES & GRAVIES","Rajadhani Spl. Curry",270],
+["CURRIES & GRAVIES","Veg. Kadai",200],
+["CURRIES & GRAVIES","Veg. Hydrabadi",200],
+["CURRIES & GRAVIES","Veg. Kolhapuri",200],
+["CURRIES & GRAVIES","Palak Paneer",230],
+["CURRIES & GRAVIES","Paneer Butter Masala",230],
+["CURRIES & GRAVIES","Mushroom Butter Masala",230],
+["CURRIES & GRAVIES","Kaju Masala",240],
+
+/* SALAD +20 */
+
+["SALAD & CURD","Green Salad",80],
+["SALAD & CURD","Curds",30],
+["SALAD & CURD","Mix Raitha",100],
+
+/* ICE CREAM */
+
+["ICE CREAMS","Hangyo Ice Cream",0],
+["ICE CREAMS","Dairy Day Ice Cream",0],
+["ICE CREAMS","Gudbud Ice Cream",0],
+
+/* STARTERS +50 */
+
+["STARTERS","Chicken Chilly",230],
+["STARTERS","Chicken 65",220],
+["STARTERS","Chicken Kabab",220],
+["STARTERS","Chicken Sukka",230],
+["STARTERS","Chicken Pepper Dry",230],
+["STARTERS","Chicken Lolypop",230],
+
+/* STARTER BONELESS +50 */
+
+["STARTER BONE LESS","Spicy Chicken Dry",250],
+["STARTER BONE LESS","Chicken Manchurian",240],
+["STARTER BONE LESS","Chicken Garlic",230],
+["STARTER BONE LESS","Lemon Chicken",230],
+["STARTER BONE LESS","Sezwan Chicken",250],
+["STARTER BONE LESS","Chicken Ghee Roast",270],
+["STARTER BONE LESS","Crispy Chicken",270],
+["STARTER BONE LESS","Dragan Chicken",270],
+["STARTER BONE LESS","Tawa Chicken",250],
+
+/* NON VEG GRAVY +50 */
+
+["NON VEG GRAVY","Ginger Chicken",230],
+["NON VEG GRAVY","Chicken Masala",220],
+["NON VEG GRAVY","Chicken Kadai",230],
+["NON VEG GRAVY","Chicken Hydrabadi",230],
+["NON VEG GRAVY","Chicken Kolhapuri",230],
+["NON VEG GRAVY","Butter Chicken (Bone)",250],
+["NON VEG GRAVY","Butter Chicken (Boneless)",270],
+["NON VEG GRAVY","Pudina Chicken",230],
+["NON VEG GRAVY","Kasturi Chicken",330],
+["NON VEG GRAVY","Rangoli Special Chicken",310],
+
+/* TANDOORI +60 */
+
+["TANDOORI","Chicken T. Tikka",280],
+["TANDOORI","Tandoori Kabab",250],
+["TANDOORI","Chicken Tandoori",0],
+["TANDOORI","Chicken Tandoori Half",0],
+["TANDOORI","Chicken T. Kalmi",300],
+
+/* BIRIYANI +50 */
+
+["BIRIYANI","Chicken Biryani Full",230],
+["BIRIYANI","Chicken Biryani Half",160],
+["BIRIYANI","Mutton Biryani",330],
+["BIRIYANI","Egg Biryani",170],
+["BIRIYANI","Prawns Biriyani",330],
+
+/* CHINESE +30 */
+
+["CHINESE","Chicken Fried Rice",180],
+["CHINESE","Chicken Sezwan Fried Rice",190],
+["CHINESE","Egg Fried Rice",150],
+["CHINESE","Chicken Noodles",170],
+["CHINESE","Egg Sezwan Fried Rice",170],
+["CHINESE","Mix Fried Rice",330],
+["CHINESE","Egg Noodles",150],
+["CHINESE","Chicken Sezwan Noodles",190],
+
+/* EGG STARTERS */
+
+["EGG STARTERS","Egg Burji",60],
+["EGG STARTERS","Egg Omlet",60],
+["EGG STARTERS","Egg Chilly",100],
+["EGG STARTERS","Egg Pep. Dry",110],
+["EGG STARTERS","Boiled Egg (2 Egg)",40],
+
+/* MUTTON +50 */
+
+["MUTTON ITEMS","Mutton Hyderabadi",350],
+["MUTTON ITEMS","Mutton Masala",340],
+["MUTTON ITEMS","Mutton Kolhapuri",350],
+["MUTTON ITEMS","Mutton Kadai",370],
+["MUTTON ITEMS","Mutton Sukka",350],
+["MUTTON ITEMS","Mutton Chilly",330],
+["MUTTON ITEMS","Mutton Pep. Dry",350],
+["MUTTON ITEMS","Mutton Ghee Roast",380],
+
+/* EGG GRAVY +30 */
+
+["EGG GRAVY","Egg Masala",150],
+["EGG GRAVY","Egg Kolhapuri",150],
+
+/* BREADS */
+
+["INDIAN BREADS / ROTI ITEMS","Tandoori Roti",25],
+["INDIAN BREADS / ROTI ITEMS","Butter Roti",30],
+["INDIAN BREADS / ROTI ITEMS","Plain Nan",30],
+["INDIAN BREADS / ROTI ITEMS","Butter Nan",35],
+["INDIAN BREADS / ROTI ITEMS","Garlic Nan",40],
+["INDIAN BREADS / ROTI ITEMS","Tawa Parota",20],
+["INDIAN BREADS / ROTI ITEMS","Coconut Chease Nan",50],
+["INDIAN BREADS / ROTI ITEMS","Chease Nan",50],
+["INDIAN BREADS / ROTI ITEMS","Butter Kulcha",40],
+
+/* SPECIAL MEALS */
+
+["NON VEG MEALS","Fish Meals",0],
+["NON VEG MEALS","Chicken Meals",220],
+["NON VEG MEALS","Egg Meals",200],
+
+/* SEAFOOD = 0 */
+
+["SEA FOOD STARTERS","Pomfret Masala",0],
+["SEA FOOD STARTERS","Pomfret Rava",0],
+["SEA FOOD STARTERS","Pomfret Tawa",0],
+["SEA FOOD STARTERS","Anjal Masala",0],
+["SEA FOOD STARTERS","Anjal Rava",0],
+["SEA FOOD STARTERS","Anjal Tawa",0],
+["SEA FOOD STARTERS","Prawns Masala",0],
+["SEA FOOD STARTERS","Prawns Rava",0],
+["SEA FOOD STARTERS","Prawns Tawa",0],
+["SEA FOOD STARTERS","Bangda Masala",0],
+["SEA FOOD STARTERS","Bangda Rava",0],
+["SEA FOOD STARTERS","Bamgda Tawa",0],
+["SEA FOOD STARTERS","Silver Masala",0],
+["SEA FOOD STARTERS","Silver Rava",0],
+["SEA FOOD STARTERS","Silver Tawa",0],
+["SEA FOOD STARTERS","Bondas Chilly",0],
+["SEA FOOD STARTERS","Bondas Pepper Dry",0],
+["SEA FOOD STARTERS","Prawns Chilly",0],
+["SEA FOOD STARTERS","Prawns Prp. Dry",0],
+["SEA FOOD STARTERS","Prawns Ghee Roast",0],
+["SEA FOOD STARTERS","Prawns Manchuri",0],
+["SEA FOOD STARTERS","Squid Golden Fry",0],
+["SEA FOOD STARTERS","Prawns Golden Fry",0],
+["SEA FOOD STARTERS","Crab Ghee Roast",0],
+["SEA FOOD STARTERS","Crab Chilly",0],
+["SEA FOOD STARTERS","Crab Pep. Dry",0]
+
+];
+
+let cart=[];
+
+/* =====================================================
+   IMAGE MATCHING
+===================================================== */
+function imageNames(foodName){
+
+    let result = [];
+
+    let parts = foodName
+        .split("/")
+        .map(x => x.trim())
+        .filter(Boolean);
+
+    parts.push(foodName.trim());
+
+    parts.forEach(part => {
+
+        let name = part.toLowerCase().trim();
+
+        let variations = [
+            name,
+            name.replace(/\s+/g, "-"),
+            name.replace(/\s+/g, "_"),
+            name.replace(/\s+/g, ""),
+            name.replace(/[^a-z0-9()]+/g, "-"),
+            name.replace(/[^a-z0-9()]+/g, "_"),
+            name.replace(/[()]/g, ""),
+            name.replace(/[()]/g, "").replace(/\s+/g, "-"),
+            name.replace(/[()]/g, "").replace(/\s+/g, "_")
+        ];
+
+        variations.forEach(v => {
+
+            if(v){
+                result.push("images/" + v + ".jpg");
+                result.push("images/" + v + ".jpeg");
+            }
+
+        });
+
+    });
+
+    return [...new Set(result)];
+}
+
+function loadImage(img,name){
+
+    let list=imageNames(name);
+    let i=0;
+
+    function next(){
+
+        if(i>=list.length){
+
+            img.alt=name;
+            return;
+        }
+
+        img.src=list[i];
+        i++;
+
+    }
+
+    img.onerror=next;
+
+    next();
+}
+
+/* =====================================================
+   DISPLAY MENU
+===================================================== */
+
+function displayMenu(){
+
+    const menu=document.getElementById("menu");
+
+    menu.innerHTML="";
+
+    const categories=[
+        ...new Set(foods.map(x=>x[0]))
+    ];
+
+    categories.forEach(category=>{
+
+        let heading=document.createElement("div");
+
+        heading.className="category";
+        heading.textContent=category;
+
+        menu.appendChild(heading);
+
+        foods.forEach((food,index)=>{
+
+            if(food[0]!==category)return;
+
+            let div=document.createElement("div");
+
+            div.className="food";
+            div.dataset.name=food[1].toLowerCase();
+
+            let left=document.createElement("div");
+
+            left.className="food-left";
+
+            let img=document.createElement("img");
+
+            img.className="food-image";
+            img.alt=food[1];
+
+            loadImage(img,food[1]);
+
+            let info=document.createElement("div");
+
+            let name=document.createElement("div");
+
+            name.className="food-name";
+            name.textContent=food[1];
+
+            let price=document.createElement("div");
+
+            if(food[2]===0){
+
+                price.className="season";
+                price.textContent="Price to be confirmed";
+
+            }else{
+
+                price.className="price";
+                price.textContent="₹"+food[2];
+
+            }
+
+            info.appendChild(name);
+            info.appendChild(price);
+
+            left.appendChild(img);
+            left.appendChild(info);
+
+            let controls=document.createElement("div");
+
+            controls.className="controls";
+
+            let minus=document.createElement("button");
+
+            minus.className="qty-btn";
+            minus.textContent="−";
+
+            minus.onclick=()=>decrease(index);
+
+            let qty=document.createElement("span");
+
+            qty.className="qty";
+            qty.id="qty-"+index;
+            qty.textContent="0";
+
+            let plus=document.createElement("button");
+
+            plus.className="qty-btn plus";
+            plus.textContent="+";
+
+            plus.onclick=()=>increase(index);
+
+            controls.appendChild(minus);
+            controls.appendChild(qty);
+            controls.appendChild(plus);
+
+            div.appendChild(left);
+            div.appendChild(controls);
+
+            menu.appendChild(div);
+
+        });
+
+    });
+
+    updateCounts();
+}
+
+/* =====================================================
+   CART FUNCTIONS
+===================================================== */
+
+function increase(index){
+
+    let item=cart.find(x=>x.index===index);
+
+    if(item){
+
+        item.qty++;
+
+    }else{
+
+        cart.push({
+            index:index,
+            qty:1
+        });
+
+    }
+
+    displayCart();
+}
+
+function decrease(index){
+
+    let item=cart.find(x=>x.index===index);
+
+    if(!item)return;
+
+    item.qty--;
+
+    if(item.qty<=0){
+
+        cart=cart.filter(
+            x=>x.index!==index
+        );
+
+    }
+
+    displayCart();
+}
+
+function removeItem(index){
+
+    cart=cart.filter(
+        x=>x.index!==index
+    );
+
+    displayCart();
+}
+
+function updateCounts(){
+
+    foods.forEach((food,index)=>{
+
+        let element=
+            document.getElementById(
+                "qty-"+index
+            );
+
+        if(!element)return;
+
+        let item=
+            cart.find(x=>x.index===index);
+
+        element.textContent=
+            item ? item.qty : "0";
+
+    });
+
+}
+
+function displayCart(){
+
+    let box=
+        document.getElementById("cartItems");
+
+    let totalBox=
+        document.getElementById("total");
+
+    box.innerHTML="";
+
+    if(cart.length===0){
+
+        box.innerHTML=
+            '<div class="empty">Cart is empty</div>';
+
+        totalBox.textContent="0";
+
+        updateCounts();
+
+        return;
+    }
+
+    let total=0;
+
+    cart.forEach(item=>{
+
+        let food=foods[item.index];
+
+        if(food[2]>0){
+
+            total+=food[2]*item.qty;
+
+        }
+
+        let row=document.createElement("div");
+
+        row.className="cart-item";
+
+        let info=document.createElement("div");
+
+        info.innerHTML=
+            "<b>"+escapeHTML(food[1])+"</b><br>"+
+            (
+                food[2]===0
+                ?"Price to be confirmed"
+                :"₹"+food[2]+" × "+item.qty
+            );
+
+        let controls=
+            document.createElement("div");
+
+        controls.className="cart-controls";
+
+        let minus=
+            document.createElement("button");
+
+        minus.className="qty-btn";
+        minus.textContent="−";
+        minus.onclick=()=>decrease(item.index);
+
+        let qty=document.createElement("b");
+
+        qty.textContent=item.qty;
+
+        let plus=
+            document.createElement("button");
+
+        plus.className="qty-btn plus";
+        plus.textContent="+";
+        plus.onclick=()=>increase(item.index);
+
+        let remove=
+            document.createElement("button");
+
+        remove.className="remove";
+        remove.textContent="Remove";
+        remove.onclick=()=>removeItem(item.index);
+
+        controls.appendChild(minus);
+        controls.appendChild(qty);
+        controls.appendChild(plus);
+        controls.appendChild(remove);
+
+        row.appendChild(info);
+        row.appendChild(controls);
+
+        box.appendChild(row);
+
+    });
+
+    totalBox.textContent=total;
+
+    updateCounts();
+}
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+function searchFood(){
+
+    let value=
+        document.getElementById("search")
+        .value
+        .toLowerCase()
+        .trim();
+
+    document
+        .querySelectorAll(".food")
+        .forEach(food=>{
+
+            food.classList.toggle(
+                "hidden",
+                !food.dataset.name.includes(value)
+            );
+
+        });
+
+    document
+        .querySelectorAll(".category")
+        .forEach(category=>{
+
+            let next=
+                category.nextElementSibling;
+
+            let found=false;
+
+            while(
+                next &&
+                !next.classList.contains("category")
+            ){
+
+                if(
+                    next.classList.contains("food") &&
+                    !next.classList.contains("hidden")
+                ){
+
+                    found=true;
+
+                }
+
+                next=next.nextElementSibling;
+
+            }
+
+            category.classList.toggle(
+                "hidden",
+                !found
+            );
+
+        });
+
+}
+
+/* =====================================================
+   WHATSAPP
+===================================================== */
+
+function sendWhatsApp(){
+
+    if(cart.length===0){
+
+        alert("Please add food items first.");
+
+        return;
+    }
+
+    let room=
+        document.getElementById("room")
+        .value.trim();
+
+    let phone=
+        document.getElementById("phone")
+        .value.trim();
+
+    if(!room){
+
+        alert("Please enter room number.");
+
+        return;
+    }
+
+    if(!phone){
+
+        alert("Please enter phone number.");
+
+        return;
+    }
+
+    let total=0;
+
+    let message=
+`🍽️ *NEW FOOD ORDER*
+
+🏨 *Room Number:* ${room}
+📞 *Customer Phone:* ${phone}
+
+━━━━━━━━━━━━━━━━
+🛒 *ORDER DETAILS*
+━━━━━━━━━━━━━━━━
+
+`;
+
+    cart.forEach((item,index)=>{
+
+        let food=foods[item.index];
+
+        let amount=food[2]*item.qty;
+
+        if(food[2]>0){
+
+            total+=amount;
+
+        }
+
+        message+=
+`${index+1}. *${food[1]}*
+   Quantity: ${item.qty}
+   Price: ${
+       food[2]===0
+       ?"Price to be confirmed"
+       :"₹"+amount
+   }
+
+`;
+
+    });
+
+    message+=
+`━━━━━━━━━━━━━━━━
+💰 *TOTAL: ₹${total}*
+━━━━━━━━━━━━━━━━
+
+⚠️ Seafood/seasonal prices will be confirmed.
+
+🙏 Please prepare and deliver the order to Room ${room}.
+
+Thank you for ordering with us! 😊`;
+
+    /* HOTEL WHATSAPP NUMBER */
+
+    const whatsappNumber="916362405907";
+
+    const url=
+        "https://wa.me/"+
+        whatsappNumber+
+        "?text="+
+        encodeURIComponent(message);
+
+    window.open(url,"_blank");
+
+}
+
+/* =====================================================
+   CLEAR CART
+===================================================== */
+
+function clearCart(){
+
+    cart=[];
+
+    displayCart();
+
+}
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHTML(text){
+
+    return text.replace(
+        /[&<>"']/g,
+        character=>({
+
+            "&":"&amp;",
+            "<":"&lt;",
+            ">":"&gt;",
+            '"':"&quot;",
+            "'":"&#039;"
+
+        }[character])
+    );
+
+}
+
+/* =====================================================
+   START
+===================================================== */
+
+displayMenu();
+displayCart();
+
+</script>
+
+</body>
+</html>
